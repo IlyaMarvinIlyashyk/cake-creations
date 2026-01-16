@@ -16,13 +16,16 @@
 "use client";
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { CameraControls, OrbitControls } from "@react-three/drei";
+import { CameraControls, OrbitControls, Environment } from "@react-three/drei";
 import { useRef } from "react";
 import { Cake } from "./Cake";
 import type { CameraControls as CameraControlsType } from "@react-three/drei";
 import Nav from "./Nav";
 import { useControls, button } from "leva";
 import * as THREE from "three";
+import { EffectComposer, Bloom } from "@react-three/postprocessing";
+import { ToneMapping } from "@react-three/postprocessing";
+import { ToneMappingMode } from "postprocessing";
 
 // Logs camera position and target in real-time
 const CameraDebugger = () => {
@@ -94,7 +97,7 @@ const Scene = () => {
 
       {/* 3D Canvas */}
       <div className="h-screen w-screen">
-        <Canvas camera={{ position: [8, 6, 8], fov: 50 }}>
+        <Canvas shadows camera={{ position: [8, 6, 8], fov: 50 }}>
           <color attach="background" args={["#fdf2f8"]} /> {/* pink-50 */}
           <CameraDebugger />
           <OrbitControls />
@@ -102,9 +105,37 @@ const Scene = () => {
             ref={cameraControlsRef}
             smoothTime={0.5} // animation duration
           />
-          <ambientLight intensity={0.6} />
-          <directionalLight position={[10, 10, 5]} intensity={1} />
+
+          {/* Improved lighting setup */}
+          <ambientLight intensity={0.4} />
+          <directionalLight
+            position={[10, 10, 5]}
+            intensity={0.8}
+            castShadow
+            shadow-mapSize={[2048, 2048]}
+            shadow-camera-far={50}
+            shadow-camera-left={-10}
+            shadow-camera-right={10}
+            shadow-camera-top={10}
+            shadow-camera-bottom={-10}
+          />
+          <directionalLight position={[-5, 5, -5]} intensity={0.3} color="#ffe4e1" />
+          <pointLight position={[0, 8, 0]} intensity={0.3} />
+
+          {/* Environment for realistic reflections - reduced intensity */}
+          <Environment preset="studio" environmentIntensity={0.3} />
+
           <Cake />
+
+          {/* Post-processing effects - subtle bloom */}
+          <EffectComposer>
+            <Bloom
+              luminanceThreshold={0.95}
+              luminanceSmoothing={0.5}
+              intensity={0.15}
+            />
+            <ToneMapping mode={ToneMappingMode.LINEAR} />
+          </EffectComposer>
         </Canvas>
       </div>
     </>
