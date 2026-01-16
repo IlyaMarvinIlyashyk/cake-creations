@@ -21,7 +21,7 @@ const galleryImages = [
 
 export const Cake = () => {
   const groupRef = useRef<THREE.Group>(null);
-  const { scene } = useGLTF("/models/cake.glb");
+  const { scene } = useGLTF("/models/cake-optimized.glb");
 
   // Enable shadows on the loaded model
   useEffect(() => {

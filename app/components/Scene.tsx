@@ -1,18 +1,3 @@
-// import { Canvas } from "@react-three/fiber";
-// import { Cake } from "./Cake";
-
-// const Scene = () => {
-//   return (
-//     <Canvas camera={{ position: [8, 4, 8], fov: 50 }}>
-//       <ambientLight intensity={0.6} />
-//       <directionalLight position={[10, 10, 5]} intensity={1} />
-//       <Cake />
-//     </Canvas>
-//   );
-// };
-
-// export default Scene;
-
 "use client";
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
@@ -32,30 +17,30 @@ const CameraDebugger = () => {
   const { camera } = useThree();
   const target = useRef(new THREE.Vector3());
 
-  useControls("Camera Debug", {
-    "Log Position": button(() => {
-      // Get where the camera is looking
-      camera.getWorldDirection(target.current);
-      target.current.multiplyScalar(10).add(camera.position);
+  //   useControls("Camera Debug", {
+  //     "Log Position": button(() => {
+  //       // Get where the camera is looking
+  //       camera.getWorldDirection(target.current);
+  //       target.current.multiplyScalar(10).add(camera.position);
 
-      const pos = camera.position;
-      const tgt = target.current;
+  //       const pos = camera.position;
+  //       const tgt = target.current;
 
-      console.log(`
-Camera Position: [${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)}]
-Camera Target:   [${tgt.x.toFixed(2)}, ${tgt.y.toFixed(2)}, ${tgt.z.toFixed(2)}]
+  //       console.log(`
+  // Camera Position: [${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)}]
+  // Camera Target:   [${tgt.x.toFixed(2)}, ${tgt.y.toFixed(2)}, ${tgt.z.toFixed(2)}]
 
-Copy this for setLookAt:
-cameraControlsRef.current?.setLookAt(
-  ${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(
-        2
-      )},  // camera position
-  ${tgt.x.toFixed(2)}, ${tgt.y.toFixed(2)}, ${tgt.z.toFixed(2)},  // target
-  true
-);
-      `);
-    }),
-  });
+  // Copy this for setLookAt:
+  // cameraControlsRef.current?.setLookAt(
+  //   ${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(
+  //         2
+  //       )},  // camera position
+  //   ${tgt.x.toFixed(2)}, ${tgt.y.toFixed(2)}, ${tgt.z.toFixed(2)},  // target
+  //   true
+  // );
+  //       `);
+  //     }),
+  //   });
 
   // Live display of position
   useFrame(() => {
@@ -105,7 +90,6 @@ const Scene = () => {
             ref={cameraControlsRef}
             smoothTime={0.5} // animation duration
           />
-
           {/* Improved lighting setup */}
           <ambientLight intensity={0.4} />
           <directionalLight
@@ -119,14 +103,15 @@ const Scene = () => {
             shadow-camera-top={10}
             shadow-camera-bottom={-10}
           />
-          <directionalLight position={[-5, 5, -5]} intensity={0.3} color="#ffe4e1" />
+          <directionalLight
+            position={[-5, 5, -5]}
+            intensity={0.3}
+            color="#ffe4e1"
+          />
           <pointLight position={[0, 8, 0]} intensity={0.3} />
-
           {/* Environment for realistic reflections - reduced intensity */}
           <Environment preset="studio" environmentIntensity={0.3} />
-
           <Cake />
-
           {/* Post-processing effects - subtle bloom */}
           <EffectComposer>
             <Bloom
