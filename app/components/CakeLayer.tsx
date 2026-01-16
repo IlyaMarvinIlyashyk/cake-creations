@@ -14,9 +14,13 @@ const CakeLayer = ({
   color,
 }: CakeLayerProps) => {
   return (
-    <mesh position={position}>
+    <mesh position={position} castShadow receiveShadow>
       <cylinderGeometry args={[topRadius, bottomRadius, height, 64]} />
-      <meshStandardMaterial color={color} />
+      <meshStandardMaterial
+        color={color}
+        roughness={0.7}
+        metalness={0.1}
+      />
     </mesh>
   );
 };
