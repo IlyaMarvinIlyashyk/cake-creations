@@ -2,45 +2,47 @@
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { CameraControls, OrbitControls, Environment } from "@react-three/drei";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Cake } from "./Cake";
 import type { CameraControls as CameraControlsType } from "@react-three/drei";
-import Nav from "./Nav";
+import Nav from "./Nav/Nav";
 import { useControls, button } from "leva";
 import * as THREE from "three";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import { ToneMapping } from "@react-three/postprocessing";
 import { ToneMappingMode } from "postprocessing";
+import { NavSection } from "./Nav/models/nav.models";
+import { HeroOverlay } from "./Hero/HeroOverlay";
 
 // Logs camera position and target in real-time
 const CameraDebugger = () => {
   const { camera } = useThree();
   const target = useRef(new THREE.Vector3());
 
-  //   useControls("Camera Debug", {
-  //     "Log Position": button(() => {
-  //       // Get where the camera is looking
-  //       camera.getWorldDirection(target.current);
-  //       target.current.multiplyScalar(10).add(camera.position);
+  useControls("Camera Debug", {
+    "Log Position": button(() => {
+      // Get where the camera is looking
+      camera.getWorldDirection(target.current);
+      target.current.multiplyScalar(10).add(camera.position);
 
-  //       const pos = camera.position;
-  //       const tgt = target.current;
+      const pos = camera.position;
+      const tgt = target.current;
 
-  //       console.log(`
-  // Camera Position: [${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)}]
-  // Camera Target:   [${tgt.x.toFixed(2)}, ${tgt.y.toFixed(2)}, ${tgt.z.toFixed(2)}]
+      console.log(`
+  Camera Position: [${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)}]
+  Camera Target:   [${tgt.x.toFixed(2)}, ${tgt.y.toFixed(2)}, ${tgt.z.toFixed(2)}]
 
-  // Copy this for setLookAt:
-  // cameraControlsRef.current?.setLookAt(
-  //   ${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(
-  //         2
-  //       )},  // camera position
-  //   ${tgt.x.toFixed(2)}, ${tgt.y.toFixed(2)}, ${tgt.z.toFixed(2)},  // target
-  //   true
-  // );
-  //       `);
-  //     }),
-  //   });
+  Copy this for setLookAt:
+  cameraControlsRef.current?.setLookAt(
+    ${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(
+        2
+      )},  // camera position
+    ${tgt.x.toFixed(2)}, ${tgt.y.toFixed(2)}, ${tgt.z.toFixed(2)},  // target
+    true
+  );
+        `);
+    }),
+  });
 
   // Live display of position
   useFrame(() => {
@@ -53,34 +55,31 @@ const CameraDebugger = () => {
 
 const Scene = () => {
   const cameraControlsRef = useRef<CameraControlsType>(null);
+  const [section, setSection] = useState<NavSection>("home");
 
-  // These functions will be called from your navigation buttons
   const goToHero = () => {
+    setSection("home");
     cameraControlsRef.current?.setLookAt(
-      -0.2,
-      7.23,
-      0.75, // camera position
-      -0.19,
-      -2.5,
-      -1.57, // target
+      -203.20, 264.80, 52.87,
+      -197.64, 257.62, 48.70,
       true
     );
   };
 
   const goToGallery = () => {
+    setSection("gallery");
     cameraControlsRef.current?.setLookAt(6, 1, 6, 0, 1, 0, true);
   };
 
   const goToContact = () => {
+    setSection("contact");
     cameraControlsRef.current?.setLookAt(5, -2, 5, 0, -2.5, 0, true);
   };
 
   return (
     <>
-      {/* HTML Navigation overlay */}
       <Nav onHome={goToHero} onGallery={goToGallery} onContact={goToContact} />
-
-      {/* 3D Canvas */}
+      <HeroOverlay section={section} />
       <div className="h-screen w-screen">
         <Canvas shadows camera={{ position: [8, 6, 8], fov: 50 }}>
           <color attach="background" args={["#fdf2f8"]} /> {/* pink-50 */}
@@ -88,9 +87,9 @@ const Scene = () => {
           <OrbitControls />
           <CameraControls
             ref={cameraControlsRef}
-            smoothTime={0.5} // animation duration
+            smoothTime={0.5}
+          // enabled={false}
           />
-          {/* Improved lighting setup */}
           <ambientLight intensity={0.4} />
           <directionalLight
             position={[10, 10, 5]}
@@ -109,10 +108,8 @@ const Scene = () => {
             color="#ffe4e1"
           />
           <pointLight position={[0, 8, 0]} intensity={0.3} />
-          {/* Environment for realistic reflections - reduced intensity */}
           <Environment preset="studio" environmentIntensity={0.3} />
           <Cake />
-          {/* Post-processing effects - subtle bloom */}
           <EffectComposer>
             <Bloom
               luminanceThreshold={0.95}
