@@ -5,6 +5,7 @@ type GalleryProps = {
   images: string[];
 };
 
+// TODO: REDO
 const Gallery = ({ images }: GalleryProps) => {
   const imagePositions = useMemo(() => {
     return images.map((image, index) => {

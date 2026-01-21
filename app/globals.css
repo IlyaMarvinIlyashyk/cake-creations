@@ -1,26 +1,60 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
+  --background: #fdf2f8;
   --foreground: #171717;
+
+  --candy-pink: #ff6b9d;
+  --candy-pink-light: #ffb3d0;
+  --candy-yellow: #ffd93d;
+  --candy-mint: #6dd5c7;
+  --candy-lavender: #c4b5fd;
+  --candy-peach: #ffcba4;
+  --frosting-white: #fff5f8;
+  --chocolate: #5d3a1a;
+  --strawberry: #e8467c;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-display: var(--font-pacifico);
+  --font-friendly: var(--font-fredoka);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-friendly), Arial, Helvetica, sans-serif;
+}
+
+@layer utilities {
+  .max-w-layout {
+    @apply max-w-[1440px] mx-auto;
+  }
+  .max-w-layout-md {
+    @apply max-w-[1200px] mx-auto;
+  }
+}
+
+.font-display {
+  font-family: var(--font-pacifico), cursive;
+}
+
+.font-friendly {
+  font-family: var(--font-fredoka), sans-serif;
+}
+
+.text-candy-shadow {
+  text-shadow:
+    3px 3px 0 var(--candy-pink-light),
+    6px 6px 0 rgba(255, 107, 157, 0.3);
+}
+
+.text-candy-shadow-sm {
+  text-shadow:
+    2px 2px 0 var(--candy-pink-light);
 }
