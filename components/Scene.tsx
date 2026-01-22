@@ -2,7 +2,7 @@
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { CameraControls, OrbitControls, Environment } from "@react-three/drei";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Cake } from "./Cake";
 import type { CameraControls as CameraControlsType } from "@react-three/drei";
 import Nav from "./Nav/Nav";
@@ -13,6 +13,8 @@ import { ToneMapping } from "@react-three/postprocessing";
 import { ToneMappingMode } from "postprocessing";
 import { NavSection } from "./Nav/models/nav.models";
 import { HeroOverlay } from "./Hero/HeroOverlay";
+import Loader from "./Loader/Loader";
+import { AnimatePresence } from "framer-motion";
 
 // Logs camera position and target in real-time
 const CameraDebugger = () => {
@@ -56,6 +58,40 @@ const CameraDebugger = () => {
 const Scene = () => {
   const cameraControlsRef = useRef<CameraControlsType>(null);
   const [section, setSection] = useState<NavSection>("home");
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [hasAnimationStarted, setHasAnimationStarted] = useState(false);
+
+  // Set initial camera position looking LEFT of cake (cake off-screen to the right)
+  // Then animate to final position where cake is in frame
+  useEffect(() => {
+    // Set initial camera: same position but looking LEFT of the cake (no animation)
+    // Offset target X by +10 to look left of the cake
+    cameraControlsRef.current?.setLookAt(
+      -203.20, 264.80, 52.87,  // same camera position as final
+      -187, 257.62, 48.70,     // target offset LEFT (higher X = looking left of cake)
+      false  // no animation - instant
+    );
+
+    // Hide loader after scene settles
+    const loadTimer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 400);
+
+    // Animate camera to reveal cake from the right
+    const animTimer = setTimeout(() => {
+      setHasAnimationStarted(true);
+      cameraControlsRef.current?.setLookAt(
+        -203.20, 264.80, 52.87,  // final camera position
+        -197.64, 257.62, 48.70,  // final target (cake enters from right)
+        true  // animate
+      );
+    }, 500);
+
+    return () => {
+      clearTimeout(loadTimer);
+      clearTimeout(animTimer);
+    };
+  }, []);
 
   const goToHero = () => {
     setSection("home");
@@ -78,17 +114,31 @@ const Scene = () => {
 
   return (
     <>
-      <Nav onHome={goToHero} onGallery={goToGallery} onContact={goToContact} />
-      <HeroOverlay section={section} />
+      {/* Loader - fades out when scene is ready */}
+      <AnimatePresence>
+        {!isLoaded && <Loader />}
+      </AnimatePresence>
+
+      {/* Navigation - animates in after camera animation starts */}
+      <Nav
+        onHome={goToHero}
+        onGallery={goToGallery}
+        onContact={goToContact}
+        isVisible={hasAnimationStarted}
+      />
+
+      {/* Hero overlay - synced with animation state */}
+      <HeroOverlay section={section} isAnimating={hasAnimationStarted} />
+
       <div className="h-screen w-screen">
-        <Canvas shadows camera={{ position: [8, 6, 8], fov: 50 }}>
+        {/* Camera position set via CameraControls in useEffect */}
+        <Canvas shadows camera={{ position: [-203.20, 264.80, 52.87], fov: 50 }}>
           <color attach="background" args={["#fdf2f8"]} /> {/* pink-50 */}
           <CameraDebugger />
           <OrbitControls />
           <CameraControls
             ref={cameraControlsRef}
-            smoothTime={0.5}
-          // enabled={false}
+            smoothTime={0.8}
           />
           <ambientLight intensity={0.4} />
           <directionalLight
