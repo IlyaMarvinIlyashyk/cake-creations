@@ -23,7 +23,7 @@ export const Cake = () => {
     if (groupRef.current) {
       groupRef.current.position.y =
         Math.sin(state.clock.elapsedTime * 0.5) * 0.1;
-      groupRef.current.rotation.y = state?.clock?.elapsedTime * 0.5 * 0.5;
+      groupRef.current.rotation.y = state?.clock?.elapsedTime * 0.5 * 0.25;
     }
   });
 
