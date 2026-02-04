@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas } from "@react-three/fiber";
-import { CameraControls, OrbitControls, Environment } from "@react-three/drei";
+import { CameraControls, Environment } from "@react-three/drei";
 import { useRef, useState, useEffect } from "react";
 import { Cake } from "./Cake";
 import type { CameraControls as CameraControlsType } from "@react-three/drei";
@@ -15,36 +15,37 @@ import Loader from "./Loader/Loader";
 import { AnimatePresence } from "framer-motion";
 import CameraDebugger from "./Debug/CameraDebugger";
 
-
 const Scene = () => {
   const cameraControlsRef = useRef<CameraControlsType>(null);
   const [section, setSection] = useState<NavSection>("home");
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasAnimationStarted, setHasAnimationStarted] = useState(false);
 
-  // Set initial camera position looking LEFT of cake (cake off-screen to the right)
-  // Then animate to final position where cake is in frame
   useEffect(() => {
-    // Set initial camera: same position but looking LEFT of the cake (no animation)
-    // Offset target X by +10 to look left of the cake
     cameraControlsRef.current?.setLookAt(
-      -203.20, 264.80, 52.87,  // same camera position as final
-      -187, 257.62, 48.70,     // target offset LEFT (higher X = looking left of cake)
-      false  // no animation - instant
+      -203.2,
+      264.8,
+      52.87,
+      -187,
+      257.62,
+      48.7,
+      false
     );
 
-    // Hide loader after scene settles
     const loadTimer = setTimeout(() => {
       setIsLoaded(true);
     }, 400);
 
-    // Animate camera to reveal cake from the right
     const animTimer = setTimeout(() => {
       setHasAnimationStarted(true);
       cameraControlsRef.current?.setLookAt(
-        -203.20, 264.80, 52.87,  // final camera position
-        -197.64, 257.62, 48.70,  // final target (cake enters from right)
-        true  // animate
+        -203.2,
+        264.8,
+        52.87,
+        -197.64,
+        257.62,
+        48.7,
+        true
       );
     }, 500);
 
@@ -56,31 +57,23 @@ const Scene = () => {
 
   const goToHero = () => {
     setSection("home");
-    cameraControlsRef.current?.setLookAt(
-      -203.20, 264.80, 52.87,
-      -197.64, 257.62, 48.70,
-      true
-    );
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const goToGallery = () => {
     setSection("gallery");
-    cameraControlsRef.current?.setLookAt(6, 1, 6, 0, 1, 0, true);
+    document.getElementById("gallery")?.scrollIntoView({ behavior: "smooth" });
   };
 
   const goToContact = () => {
     setSection("contact");
-    cameraControlsRef.current?.setLookAt(5, -2, 5, 0, -2.5, 0, true);
+    document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
-    <>
-      {/* Loader - fades out when scene is ready */}
-      <AnimatePresence>
-        {!isLoaded && <Loader />}
-      </AnimatePresence>
+    <div>
+      <AnimatePresence>{!isLoaded && <Loader />}</AnimatePresence>
 
-      {/* Navigation - animates in after camera animation starts */}
       <Nav
         onHome={goToHero}
         onGallery={goToGallery}
@@ -88,18 +81,16 @@ const Scene = () => {
         isVisible={hasAnimationStarted}
       />
 
-      {/* Hero overlay - synced with animation state */}
-      <HeroOverlay section={section} isAnimating={hasAnimationStarted} />
-
-      <div className="h-screen w-screen">
-        {/* Camera position set via CameraControls in useEffect */}
-        <Canvas shadows camera={{ position: [-203.20, 264.80, 52.87], fov: 50 }}>
-          <color attach="background" args={["#fdf2f8"]} /> {/* pink-50 */}
+      {/* Hero section - scrolls naturally */}
+      <div className="relative h-screen w-full">
+        <Canvas shadows camera={{ position: [-203.2, 264.8, 52.87], fov: 50 }}>
+          <color attach="background" args={["#fdf2f8"]} />
           <CameraDebugger />
-          <OrbitControls />
           <CameraControls
             ref={cameraControlsRef}
             smoothTime={0.8}
+            mouseButtons={{ left: 0, middle: 0, right: 0, wheel: 0 }}
+            touches={{ one: 0, two: 0, three: 0 }}
           />
           <ambientLight intensity={0.4} />
           <directionalLight
@@ -130,15 +121,28 @@ const Scene = () => {
             <ToneMapping mode={ToneMappingMode.LINEAR} />
           </EffectComposer>
         </Canvas>
+
+        {/* Hero overlay - positioned over canvas, scrolls with it */}
+        <HeroOverlay section={section} isAnimating={hasAnimationStarted} />
       </div>
-      {/* <Gallery /> */}
-    </>
+
+      {/* Gallery section */}
+      <section id="gallery" className="min-h-screen bg-white">
+        <div className="container mx-auto px-8 py-16">
+          <h2 className="text-4xl font-light text-pink-900 mb-8">Gallery</h2>
+          <p className="text-pink-700">Your gallery content here...</p>
+        </div>
+      </section>
+
+      {/* Contact section */}
+      <section id="contact" className="min-h-screen bg-pink-50">
+        <div className="container mx-auto px-8 py-16">
+          <h2 className="text-4xl font-light text-pink-900 mb-8">Contact</h2>
+          <p className="text-pink-700">Contact content here...</p>
+        </div>
+      </section>
+    </div>
   );
 };
 
 export default Scene;
-
-
-
-
-
