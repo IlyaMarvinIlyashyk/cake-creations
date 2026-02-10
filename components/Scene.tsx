@@ -162,7 +162,6 @@ const Scene = () => {
       {/* Loader - fades out when scene is ready */}
       <AnimatePresence>{!isLoaded && <Loader />}</AnimatePresence>
 
-      {/* Navigation - animates in after camera animation starts */}
       <Nav
         onHome={goToHero}
         onGallery={goToGallery}
@@ -223,6 +222,9 @@ const Scene = () => {
             <ToneMapping mode={ToneMappingMode.LINEAR} />
           </EffectComposer>
         </Canvas>
+
+        {/* Hero overlay - positioned over canvas, scrolls with it */}
+        <HeroOverlay section={section} isAnimating={hasAnimationStarted} />
       </div>
     </>
   );

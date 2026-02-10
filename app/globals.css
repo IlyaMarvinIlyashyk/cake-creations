@@ -58,8 +58,7 @@ body {
 }
 
 .text-candy-shadow {
-  text-shadow:
-    3px 3px 0 var(--candy-pink-light),
+  text-shadow: 3px 3px 0 var(--candy-pink-light),
     6px 6px 0 rgba(255, 107, 157, 0.3);
 }
 

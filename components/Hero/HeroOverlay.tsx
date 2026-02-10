@@ -16,7 +16,7 @@ export const HeroOverlay = ({
   return (
     <AnimatePresence>
       {shouldShow && (
-        <div className="fixed inset-0 z-10 pointer-events-none flex items-center">
+        <div className="absolute inset-0 z-10 pointer-events-none flex items-center">
           <motion.div
             initial={{ opacity: 0, x: -80, scale: 0.9 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
