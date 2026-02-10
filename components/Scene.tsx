@@ -1,6 +1,6 @@
 "use client";
 
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useFrame } from "@react-three/fiber";
 import { CameraControls, Environment } from "@react-three/drei";
 import { useRef, useState, useEffect } from "react";
 import { Cake } from "./Cake";
@@ -14,6 +14,74 @@ import { HeroOverlay } from "./Hero/HeroOverlay";
 import Loader from "./Loader/Loader";
 import { AnimatePresence } from "framer-motion";
 import CameraDebugger from "./Debug/CameraDebugger";
+import * as THREE from "three";
+
+// Camera keyframes
+const HERO = {
+  pos: [-263.67, 226.93, 115.41] as const,
+  target: [-257.01, 221.94, 109.88] as const,
+};
+const GALLERY = {
+  pos: [40, 130, 60] as const,
+  target: [0, 100, 0] as const,
+};
+
+// ScrollCamera lives inside Canvas to use useFrame
+function ScrollCamera({
+  cameraControlsRef,
+  scrollTarget,
+  scrollProgress,
+  onSectionChange,
+}: {
+  cameraControlsRef: React.RefObject<CameraControlsType | null>;
+  scrollTarget: React.RefObject<number>;
+  scrollProgress: React.RefObject<number>;
+  onSectionChange: (section: NavSection) => void;
+}) {
+  const lastSection = useRef<NavSection>("home");
+
+  useFrame((_, delta) => {
+    // Damp scroll progress toward target (frame-rate independent)
+    scrollProgress.current = THREE.MathUtils.damp(
+      scrollProgress.current,
+      scrollTarget.current,
+      4,
+      delta,
+    );
+
+    // Interpolate camera between hero and gallery
+    cameraControlsRef.current?.lerpLookAt(
+      HERO.pos[0],
+      HERO.pos[1],
+      HERO.pos[2],
+      HERO.target[0],
+      HERO.target[1],
+      HERO.target[2],
+      GALLERY.pos[0],
+      GALLERY.pos[1],
+      GALLERY.pos[2],
+      GALLERY.target[0],
+      GALLERY.target[1],
+      GALLERY.target[2],
+      scrollProgress.current,
+      false,
+    );
+
+    // Update section based on threshold (only when it changes)
+    const newSection: NavSection =
+      scrollProgress.current > 0.8
+        ? "gallery"
+        : scrollProgress.current < 0.2
+          ? "home"
+          : lastSection.current;
+    if (newSection !== lastSection.current) {
+      lastSection.current = newSection;
+      onSectionChange(newSection);
+    }
+  });
+
+  return null;
+}
 
 const Scene = () => {
   const cameraControlsRef = useRef<CameraControlsType>(null);
@@ -21,32 +89,23 @@ const Scene = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasAnimationStarted, setHasAnimationStarted] = useState(false);
 
+  // Scroll state — refs to avoid re-renders
+  const scrollTarget = useRef(0);
+  const scrollProgress = useRef(0);
+
   useEffect(() => {
-    cameraControlsRef.current?.setLookAt(
-      -203.2,
-      264.8,
-      52.87,
-      -187,
-      257.62,
-      48.7,
-      false
-    );
+    // Initial: look LEFT of cake (cake off-screen to the right)
+    cameraControlsRef.current?.setLookAt(-150, 150, 250, -80, 85, 0, false);
 
     const loadTimer = setTimeout(() => {
       setIsLoaded(true);
     }, 400);
 
+    // Hand off to scroll system after load
     const animTimer = setTimeout(() => {
       setHasAnimationStarted(true);
-      cameraControlsRef.current?.setLookAt(
-        -203.2,
-        264.8,
-        52.87,
-        -197.64,
-        257.62,
-        48.7,
-        true
-      );
+      scrollTarget.current = 0;
+      scrollProgress.current = 0;
     }, 500);
 
     return () => {
@@ -55,23 +114,52 @@ const Scene = () => {
     };
   }, []);
 
+  const canvasWrapperRef = useRef<HTMLDivElement>(null);
+  const snapTimer = useRef<ReturnType<typeof setTimeout>>(null);
+
+  // Native wheel listener with { passive: false } so preventDefault works
+  useEffect(() => {
+    const el = canvasWrapperRef.current;
+    if (!el) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      scrollTarget.current = THREE.MathUtils.clamp(
+        scrollTarget.current + e.deltaY / 1000,
+        0,
+        1,
+      );
+
+      // Snap-assist after user stops scrolling for 300ms
+      if (snapTimer.current) clearTimeout(snapTimer.current);
+      snapTimer.current = setTimeout(() => {
+        if (scrollTarget.current > 0.7) scrollTarget.current = 1;
+        else if (scrollTarget.current < 0.3) scrollTarget.current = 0;
+      }, 300);
+    };
+
+    el.addEventListener("wheel", handleWheel, { passive: false });
+    return () => el.removeEventListener("wheel", handleWheel);
+  }, []);
+
   const goToHero = () => {
     setSection("home");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    scrollTarget.current = 0;
   };
 
   const goToGallery = () => {
     setSection("gallery");
-    document.getElementById("gallery")?.scrollIntoView({ behavior: "smooth" });
+    scrollTarget.current = 1;
   };
 
   const goToContact = () => {
     setSection("contact");
-    document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
+    cameraControlsRef.current?.setLookAt(-60, 50, 80, 0, 60, 0, true);
   };
 
   return (
-    <div>
+    <>
+      {/* Loader - fades out when scene is ready */}
       <AnimatePresence>{!isLoaded && <Loader />}</AnimatePresence>
 
       <Nav
@@ -81,16 +169,29 @@ const Scene = () => {
         isVisible={hasAnimationStarted}
       />
 
-      {/* Hero section - scrolls naturally */}
-      <div className="relative h-screen w-full">
-        <Canvas shadows camera={{ position: [-203.2, 264.8, 52.87], fov: 50 }}>
+      {/* Hero overlay - synced with animation state */}
+      <HeroOverlay section={section} isAnimating={hasAnimationStarted} />
+
+      <div ref={canvasWrapperRef} className="h-screen w-screen">
+        <Canvas shadows camera={{ position: [-150, 150, 250], fov: 50 }}>
           <color attach="background" args={["#fdf2f8"]} />
           <CameraDebugger />
           <CameraControls
             ref={cameraControlsRef}
             smoothTime={0.8}
-            mouseButtons={{ left: 0, middle: 0, right: 0, wheel: 0 }}
-            touches={{ one: 0, two: 0, three: 0 }}
+            minDistance={0}
+            maxDistance={Infinity}
+            minPolarAngle={0}
+            maxPolarAngle={Math.PI}
+            minAzimuthAngle={-Infinity}
+            maxAzimuthAngle={Infinity}
+            mouseButtons-wheel={0}
+          />
+          <ScrollCamera
+            cameraControlsRef={cameraControlsRef}
+            scrollTarget={scrollTarget}
+            scrollProgress={scrollProgress}
+            onSectionChange={setSection}
           />
           <ambientLight intensity={0.4} />
           <directionalLight
@@ -111,7 +212,7 @@ const Scene = () => {
           />
           <pointLight position={[0, 8, 0]} intensity={0.3} />
           <Environment preset="studio" environmentIntensity={0.3} />
-          <Cake />
+          <Cake section={section} />
           <EffectComposer>
             <Bloom
               luminanceThreshold={0.95}
@@ -125,23 +226,7 @@ const Scene = () => {
         {/* Hero overlay - positioned over canvas, scrolls with it */}
         <HeroOverlay section={section} isAnimating={hasAnimationStarted} />
       </div>
-
-      {/* Gallery section */}
-      <section id="gallery" className="min-h-screen bg-white">
-        <div className="container mx-auto px-8 py-16">
-          <h2 className="text-4xl font-light text-pink-900 mb-8">Gallery</h2>
-          <p className="text-pink-700">Your gallery content here...</p>
-        </div>
-      </section>
-
-      {/* Contact section */}
-      <section id="contact" className="min-h-screen bg-pink-50">
-        <div className="container mx-auto px-8 py-16">
-          <h2 className="text-4xl font-light text-pink-900 mb-8">Contact</h2>
-          <p className="text-pink-700">Contact content here...</p>
-        </div>
-      </section>
-    </div>
+    </>
   );
 };
 

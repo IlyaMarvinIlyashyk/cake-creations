@@ -3,11 +3,17 @@ import { useFrame } from "@react-three/fiber";
 import { useRef, useEffect } from "react";
 import * as THREE from "three";
 import { useControls } from "leva";
+import { NavSection } from "./Nav/models/nav.models";
 
 useGLTF.preload("/models/cake-optimized.glb");
 
-export const Cake = () => {
+interface CakeProps {
+  section?: NavSection;
+}
+
+export const Cake = ({ section = "home" }: CakeProps) => {
   const groupRef = useRef<THREE.Group>(null);
+  const rotationSpeed = useRef(0.125);
   const { scene } = useGLTF("/models/cake-optimized.glb");
 
   useEffect(() => {
@@ -19,11 +25,16 @@ export const Cake = () => {
     });
   }, [scene]);
 
-  useFrame((state) => {
+  useFrame((state, delta) => {
     if (groupRef.current) {
       groupRef.current.position.y =
         Math.sin(state.clock.elapsedTime * 0.5) * 0.1;
-      groupRef.current.rotation.y = state?.clock?.elapsedTime * 0.5 * 0.25;
+
+      // Lerp rotation speed: 0 for gallery, full speed otherwise
+      const targetSpeed = section === "gallery" ? 0 : 0.125;
+      rotationSpeed.current = THREE.MathUtils.damp(rotationSpeed.current, targetSpeed, 3, delta);
+
+      groupRef.current.rotation.y += rotationSpeed.current * delta;
     }
   });
 
