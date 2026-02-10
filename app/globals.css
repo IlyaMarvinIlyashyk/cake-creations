@@ -25,6 +25,15 @@
   --font-friendly: var(--font-fredoka);
 }
 
+html,
+body {
+  overflow: hidden;
+  overscroll-behavior: none;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -33,11 +42,11 @@ body {
 
 @layer utilities {
   .max-w-layout {
-    @apply max-w-[1440px] mx-auto;
+    @apply max-w-[1330px] mx-auto;
   }
-  .max-w-layout-md {
+  /* .max-w-layout-md {
     @apply max-w-[1200px] mx-auto;
-  }
+  } */
 }
 
 .font-display {
@@ -55,6 +64,5 @@ body {
 }
 
 .text-candy-shadow-sm {
-  text-shadow:
-    2px 2px 0 var(--candy-pink-light);
+  text-shadow: 2px 2px 0 var(--candy-pink-light);
 }
